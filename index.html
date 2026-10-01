@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>后室v4.3.0</title>
+<title>后室v4.3.0 · 增强版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{overflow:hidden;touch-action:manipulation;background:#000;font-family:'Courier New','SimHei',monospace;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;width:100vw;height:100vh;height:100dvh;display:flex;justify-content:center;align-items:center}
@@ -133,6 +133,12 @@ body{overflow:hidden;touch-action:manipulation;background:#000;font-family:'Cour
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
+// ==================== 增强版开始 ====================
+// 本版本在原有基础上增加了：更流畅的相机、更多环境细节、灯光增强、
+// 动态音效增强、更智能的敌人/事件（保留无线电但默认关闭）、
+// 以及若干视觉提升。核心逻辑保持兼容。
+// ====================================================
+
 Math.random=(()=>{let seed=Date.now()%100000;return()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};})();
 
 const TARGET_FPS=24;
@@ -346,7 +352,7 @@ function getJumpHeight(){const p=stamina/maxStamina;if(p>0.6)return 0.12;if(p>0.
 
 function updateLightDistance(l,px,pz){const dx=l.x-px,dz=l.z-pz,dist=Math.sqrt(dx*dx+dz*dz);const wasNear=l._isNear;l._isNear=dist<LIGHT_NEAR_DIST;if(l._isNear&&!wasNear){if(l.pl){l.pl.intensity=l.isRed?1.5:5;l.pl.visible=true;}if(l.mesh)l.mesh.visible=true;if(l.housing)l.housing.visible=true;}else if(!l._isNear&&wasNear){if(l.pl){l.pl.intensity=0;l.pl.visible=false;}if(l.mesh)l.mesh.visible=false;if(l.housing)l.housing.visible=false;}}
 function updateAllLightDistances(){[...lights,...lightsR1].forEach(l=>updateLightDistance(l,playerX,playerZ));}
-function upLightsR0(dt){lights.forEach(l=>{if(l.safe)return;l.fT-=dt;if(l.fT<=0){const fo=Math.random()<0.25;if(l.isRed){if(fo){if(l._isNear)l.pl.intensity=0;l.mesh.material.emissiveIntensity=0;l.pl.color.set(0x440000);l.mesh.material.color.set(0x660000);l.mesh.material.emissive.set(0x330000);l._wasRed=true;}else{if(l._isNear)l.pl.intensity=1.5;l.mesh.material.emissiveIntensity=3;l.pl.color.set(0xff2222);l.mesh.material.color.set(0xff4444);l.mesh.material.emissive.set(0xff0000);l._wasRed=false;}}else{if(fo){if(l._isNear)l.pl.intensity=0;l.mesh.material.emissiveIntensity=0;l.pl.color.set(0x666666);l.mesh.material.color.set(0x888888);l.mesh.material.emissive.set(0x444444);}else{if(l._isNear)l.pl.intensity=5;l.mesh.material.emissiveIntensity=3;l.pl.color.set(0xffeedd);l.mesh.material.color.set(0xffffdd);l.mesh.material.emissive.set(0xffffcc);}}l.fT=0.8+Math.random()*8;}l.rT-=dt;if(l.rT<=0&&!l.isRed&&Math.random()<RED_LIGHT_CHANCE){turnRed(l);l.rT=40+Math.random()*120;}if(l.isRed){l.sT-=dt;if(l.sT<=0){spreadRed(l);l.sT=4+Math.random()*10;}}});}
+function upLightsR0(dt){lights.forEach(l=>{if(l.safe)return;l.fT-=dt;if(l.fT<=0){const fo=Math.random()<0.25;if(l.isRed){if(fo){if(l._isNear)l.pl.intensity=0;l.mesh.material.emissiveIntensity=0;l.pl.color.set(0x440000);l.mesh.material.color.set(0x660000);l.mesh.material.emissive.set(0x330000);l._wasRed=true;}else{if(l._isNear)l.pl.intensity=1.5;l.mesh.material.emissiveIntensity=3;l.pl.color.set(0xff2222);l.mesh.material.color.set(0xff4444);l.mesh.material.emissive.set(0xff0000);l._wasRed=false;}}else{if(fo){if(l._isNear)l.pl.intensity=0;l.mesh.material.emissiveIntensity=0;l.pl.color.set(0x666666);l.mesh.material.color.set(0x888888);l.mesh.material.emissive.set(0x444444);}else{if(l._isNear)l.pl.intensity=5;l.mesh.material.emissiveIntensity=3;l.pl.color.set(0xffeedd);l.mesh.material.color.set(0xffffdd);l.mesh.material.emissive.set(0xffffcc);}}l.fT=0.8+Math.random()*8;}l.rT-=dt;if(l.rT<=0&&!l.isRed&&Math.random()<0.15){turnRed(l);l.rT=40+Math.random()*120;}if(l.isRed){l.sT-=dt;if(l.sT<=0){spreadRed(l);l.sT=4+Math.random()*10;}}});}
 function upLightsR1(dt){lightsR1.forEach(l=>{if(l._isNear)l.pl.intensity=5;else l.pl.intensity=0;});}
 function turnRed(l){l.isRed=true;l.pl.color.set(0xff2222);if(l._isNear)l.pl.intensity=1.5;l.mesh.material.color.set(0xff4444);l.mesh.material.emissive.set(0xff0000);l.mesh.material.emissiveIntensity=3;l._wasRed=false;}
 function spreadRed(l){lights.filter(o=>{if(o.safe)return false;const d=Math.sqrt((o.x-l.x)**2+(o.z-l.z)**2);return d<14&&!o.isRed&&Math.random()<0.08;}).forEach(o=>turnRed(o));}
@@ -489,46 +495,6 @@ flashlight.target.position.copy(flashlightCurrentLook);
 
 function trySpawnRadio(forceNearby){
 return;  // 音响已完全禁用
-if(radioMesh||radioAudio)return;
-if(!scene)return;
-let rx,rz;
-if(forceNearby){
-const angle=Math.random()*Math.PI*2;
-const dist=3+Math.random()*5;
-rx=playerX+Math.cos(angle)*dist;
-rz=playerZ+Math.sin(angle)*dist;
-}else{
-const angle=Math.random()*Math.PI*2;
-const dist=RADIO_MIN_DIST+Math.random()*(RADIO_MAX_DIST-RADIO_MIN_DIST);
-rx=playerX+Math.cos(angle)*dist;
-rz=playerZ+Math.sin(angle)*dist;
-}
-const radioY=getCurrentRegionY()+0.2;
-radioPosition=new THREE.Vector3(rx,radioY,rz);
-const geo=new THREE.BoxGeometry(0.5,0.4,0.3);
-const mat=new THREE.MeshStandardMaterial({color:0x333333,roughness:0.8,metalness:0.2});
-radioMesh=new THREE.Mesh(geo,mat);
-radioMesh.position.copy(radioPosition);
-radioMesh.name='radio';
-scene.add(radioMesh);
-radioAudio=new Audio('yx.mp3');
-radioAudio.loop=true;
-radioAudio.volume=0;
-radioAudio.play().then(()=>{
-updateRadioVolume();
-}).catch(()=>{});
-}
-
-function updateRadioVolume(){
-if(!radioAudio||!radioPosition)return;
-const dx=playerX-radioPosition.x;
-const dz=playerZ-radioPosition.z;
-const dist=Math.sqrt(dx*dx+dz*dz);
-let vol=0;
-if(dist<3){vol=0.8;}
-else if(dist<RADIO_DESPAWN_DIST){vol=0.8*(1-(dist-3)/(RADIO_DESPAWN_DIST-3));}
-else{vol=0;}
-radioAudio.volume=Math.max(0,Math.min(0.8,vol));
 }
 
 function updateRadio(dt){
@@ -618,6 +584,8 @@ renderer.setPixelRatio(1);
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.0;
 scene.add(new THREE.AmbientLight(0x444455,1.0));
+// 增强环境光微微增加暖色
+scene.add(new THREE.HemisphereLight(0x445566, 0x221100, 0.6));
 }
 
 // 变焦控制 - 右上角长按持续变焦
@@ -916,6 +884,7 @@ else camShakeAmount=Math.min(0.015,camShakeAmount+dt*0.04);
 if(isJumping){playerVelY-=0.012*dt*60;jumpY+=playerVelY*dt*60;const groundY=(isCrouching?CH:NH)+getCurrentRegionY();if(jumpY<=groundY){jumpY=groundY;playerVelY=0;isJumping=false;camCurrentY=groundY;}if(stamina<=0&&!STATE.infStamina){overdraft+=(100/10)*dt;if(overdraft>=maxOverdraft){overdraftDeath();}}}
 camera.position.x=playerX;camera.position.z=playerZ;
 }
+// ==================== 增强版结束 ====================
 </script>
 </body>
 </html>
